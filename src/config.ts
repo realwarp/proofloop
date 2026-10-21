@@ -13,7 +13,7 @@ export const config = {
   port: readPort(process.env.PORT),
   llmApiKey: process.env.LLM_API_KEY ?? "",
   llmBaseUrl: process.env.LLM_BASE_URL ?? "https://integrate.api.nvidia.com/v1",
-  llmModel: process.env.LLM_MODEL ?? "nvidia/nemotron-3-nano-30b-a3b",
+  llmModel: process.env.LLM_MODEL ?? "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
   tavilyApiKey: process.env.TAVILY_API_KEY ?? "",
   langSmithApiKey: process.env.LANGSMITH_API_KEY ?? "",
 };
