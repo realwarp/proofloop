@@ -2,15 +2,12 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { randomUUID } from "node:crypto";
 import { config } from "./config.js";
 import { chat } from "./providers/llm.js";
+import { parseAgentPlan } from "./schemas/plan.js";
 
 const MAX_BODY_BYTES = 16 * 1024;
 const startedAt = Date.now();
 
-function sendJson(
-  res: ServerResponse,
-  status: number,
-  payload: unknown,
-): void {
+function sendJson(res: ServerResponse, status: number, payload: unknown): void {
   res.writeHead(status, {
     "content-type": "application/json; charset=utf-8",
     "cache-control": "no-store",
@@ -69,31 +66,46 @@ const server = createServer(async (req, res) => {
         });
         return;
       }
+
       const reply = await chat([
         {
           role: "system",
           content: [
             "You are ProofLoop's planning component.",
             "Do not claim you inspected a repository or ran commands.",
-            "Produce a short, cautious plan for a coding task.",
-            "Return JSON with keys: goal, steps (array of strings), checks (array of strings), risks (array of strings).",
-            "Do not include executable shell commands at this stage.",
+            "Return only valid JSON with keys goal, steps, checks, risks.",
+            "goal must be a string; steps, checks and risks must be arrays of strings.",
+            "Do not include executable shell commands.",
           ].join(" "),
         },
         { role: "user", content: task.trim() },
       ], { maxTokens: 700 });
 
+      let plan;
+      try {
+        plan = parseAgentPlan(reply.content);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Invalid model output.";
+        sendJson(res, 502, {
+          error: "The model response was not a valid plan.",
+          detail: message,
+          requestId,
+          model: reply.model,
+        });
+        return;
+      }
+
       sendJson(res, 200, {
         requestId,
         status: "plan_generated",
         model: reply.model,
-        planText: reply.content,
+        plan,
         usage: reply.usage ?? null,
         disclaimer: "Planning only. No repository was read or modified, and no tests were run.",
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unexpected error.";
-      const status = message.includes("exceeds") ? 413 : 502;
+      const status = message.includes("exceeds") ? 413 : message.includes("valid JSON") ? 400 : 502;
       sendJson(res, status, { error: message, requestId });
     }
     return;
