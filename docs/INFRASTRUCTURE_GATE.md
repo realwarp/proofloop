@@ -1,63 +1,78 @@
 # Infrastructure Gate
 
-Do these checks before major UI work. Run them on the Windows development machine because this environment cannot authenticate to your account. Do not paste secrets into chat or commit .env.
+Do these checks before major UI work. The account must be checked by the owner in the console because this environment cannot authenticate to your account. Never paste secrets into chat or commit .env.
 
-## 1. Credentials
+## Primary path: Nebius AI Cloud
 
-Add these values to the root .env file:
+Read [AI Cloud Path](AI_CLOUD_PATH.md) first.
 
-~~~dotenv
-NEBIUS_API_KEY=your_token_factory_api_key
-NEBIUS_PROJECT_ID=your_token_factory_project_id
-NEBIUS_BASE_URL=https://api.tokenfactory.nebius.com/v1
-NEBIUS_MODEL=nvidia/nemotron-3-super-120b-a12b
-~~~
+### Gate 0 — account access and cost, without provisioning
 
-The API key and project ID are separate values. Do not use an NVIDIA API Catalog key.
+1. Open https://console.nebius.com and sign in using legitimate account details.
+2. Check whether a tenant/project appears.
+3. Inspect billing and available balance/credits only. Do not add a card or click Create endpoint.
+4. If no explicit AI Cloud credits or support-approved no-cost route is shown, stop. The official FAQ says Builder Program credits are specifically for Token Factory, and Nebius's signup guide states that adding a card charges $25 initially.
+5. If AI Cloud onboarding is blocked because of country/card support, continue through the official support thread. Do not bypass billing-country restrictions.
 
-## 2. Verify inference access
+Official references:
+- Hackathon FAQ: https://nebiusglobalaihackathon.devpost.com/details/faqs
+- Signup and billing: https://docs.nebius.com/signup-billing/sign-up
+- Serverless endpoint model deployment: https://docs.nebius.com/serverless/tutorials/deploy-model
+- Live pricing: https://nebius.com/prices
 
-Run:
+Current price pages list NVIDIA L40S Intel on-demand from $1.55/GPU-hour; CPU, memory, storage, applicable taxes, regional availability and service-specific billing may add cost. The endpoint guide explicitly says the endpoint and underlying compute are chargeable. Treat the console estimate as authoritative and require explicit user approval before creating anything.
+
+### Intended AI Cloud model endpoint (only after approval)
+
+Use the official Serverless AI endpoint and vLLM workflow to host the open NVIDIA model:
+
+nvidia/NVIDIA-Nemotron-Nano-9B-v2
+
+Model card: https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2
+
+The official Nebius tutorial demonstrates a custom endpoint using vllm/vllm-openai:v0.18.0-cu130, port 8000, GPU compute, and bearer-token authentication. The model is downloaded from Hugging Face when the endpoint starts. Follow the current tutorial and model card for exact runtime options. Do not create the resource just to see whether it works before the cost gate passes.
+
+After the endpoint is running:
+- Copy its public HTTPS URL and append /v1 for LLM_BASE_URL.
+- Set LLM_API_KEY to the endpoint's generated bearer token.
+- Set LLM_MODEL to the exact model ID served by vLLM.
+- Run npm run test:model to test a real inference request.
+- Optionally verify GET <endpoint-url>/v1/models with the endpoint bearer token.
+
+### Coding-agent execution gate
+
+A working model endpoint alone does not prove ProofLoop can execute and test code on Nebius. The first real agent task must run in an allowed Nebius AI Cloud compute service, with a controlled workspace and actual test output. The local Express fixture is only development evidence.
+
+The Coding and Agentic Engineering track text specifically references Token Factory. Because this plan uses AI Cloud instead, confirm the track-fit interpretation with the official organizers before submission. The general project rules permit either Token Factory or AI Cloud, but do not silently assume track-specific wording is waived.
+
+## Optional alternate path: Token Factory diagnostics
+
+These scripts remain available if official support later unblocks Token Factory. Configure NEBIUS_API_KEY, NEBIUS_PROJECT_ID, NEBIUS_BASE_URL, and NEBIUS_MODEL in .env and run:
 
 ~~~powershell
-node scripts/nebius-preflight.mjs
+npm run preflight:nebius
 ~~~
 
-The script requests GET /v1/models, prints NVIDIA Nemotron IDs visible to the key, then sends a tiny real chat-completion request with an ID returned by that catalogue. Both requests must succeed to pass this gate.
-
-If /models is unsupported or fails, verify the current API endpoint docs before assuming access works. Do not fabricate a model ID or mark this gate passed without a real inference response.
-
-## 3. Verify Token Factory Sandboxes access
-
-Sandboxes is a beta feature with separate project access. Official setup guide:
-https://docs.tokenfactory.nebius.com/sandboxes/start/set-up-access
-
-Use Python 3.12 for the official quickstart:
+Token Factory Sandboxes requires separate beta access:
 
 ~~~powershell
 py -3.12 -m venv .venv-sandbox
 .\.venv-sandbox\Scripts\Activate.ps1
 python -m pip install -r requirements-sandbox.txt
-python scripts/sandbox-smoke.py
+npm run preflight:sandbox
 ~~~
 
-The smoke test follows the official SDK pattern: save a marker file in one operation, then read the marker from the returned image in a second operation. Expected output includes:
+These checks are optional for the current AI Cloud plan and must not be described as AI Cloud access tests.
 
-~~~text
-[PASS] Sandbox execution succeeded.
-[PASS] Saved filesystem state was reused in a second operation.
-Proof: PROOFLOOP_SANDBOX_OK
-~~~
+## Pass checklist
 
-If access is inactive or forbidden, request Sandboxes activation in the Token Factory console and contact contree@nebius.com with the project ID and profile status. Never send your API key. Local execution is useful for development but does not prove Token Factory Sandboxes access.
+- [ ] Legitimate AI Cloud console access checked.
+- [ ] No-cost credit path confirmed or exact cost explicitly approved by the user.
+- [ ] AI Cloud endpoint served NVIDIA's open Nemotron model.
+- [ ] Real chat completion returned from that endpoint.
+- [ ] Actual coding task ran on an allowed Nebius AI Cloud compute path.
+- [ ] Baseline failure was reproduced in that cloud environment.
+- [ ] Model-generated patch passed regression tests in that cloud environment.
+- [ ] Track-fit caveat resolved with the official organizers if needed.
 
-## 4. Gate checklist
-
-- [ ] Model catalogue request succeeded.
-- [ ] At least one NVIDIA Nemotron model was returned for this project.
-- [ ] Real inference request succeeded.
-- [ ] Sandboxes smoke test returned the marker from a second operation.
-- [ ] Express migration fixture baseline failure is reproduced in Sandboxes.
-- [ ] Agent-generated patch passes all fixture regression tests in Sandboxes.
-
-Do not mark a gate passed unless the corresponding command's actual output has been recorded.
+Do not mark a gate passed from documentation alone or from a model's claim.
