@@ -63,7 +63,7 @@ LLM_MODEL=nvidia/NVIDIA-Nemotron-Nano-9B-v2
 
 Keep the endpoint token secret. Do not send it in chat. Do not write it in source code, screenshots, logs, issue posts, or the README.
 
-## Code execution for the coding-agent workflow
+## Inference smoke test once the endpoint is running\n\nSet LLM_API_KEY to the endpoint bearer token, LLM_BASE_URL to the endpoint public HTTPS URL plus /v1, and LLM_MODEL to the exact served model ID. Then run:\n\n~~~powershell\nnpm run preflight:ai-cloud\n~~~\n\nThe preflight sends a small, potentially billable inference request. Use it only after you confirm endpoint cost and approve using the endpoint.\n\n## Code execution for the coding-agent workflow
 
 The current project has a deterministic local fixture for the Express 4-to-5 wildcard-route migration. That is only a development test. To demonstrate the intended Nebius path, we must run the actual coding task/test job using an allowed Nebius AI Cloud compute service, capture the real process exit code and output, and preserve a reviewable patch. Do not label local execution as remote Nebius execution.
 
