@@ -22,6 +22,7 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: node --check scripts/nebius-preflight.mjs
+      - run: node --check scripts/ai-cloud-preflight.mjs
       - run: node --check scripts/verify-migration-fixture.mjs
       - run: python -m py_compile scripts/sandbox-smoke.py
       - run: npm run verify:fixture
