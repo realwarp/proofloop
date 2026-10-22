@@ -1,87 +1,114 @@
 # ProofLoop
 
-> A research-grounded AI coding agent that edits code, runs tests, and reports evidence of whether a task succeeded.
+> A research-grounded coding agent that edits code, runs tests, and reports evidence of whether a task succeeded.
 
-ProofLoop is being built for the Nebius x NVIDIA Global AI Hackathon. Its goal is not just to generate a code patch, but to execute a bounded engineering workflow and report verifiable outcomes.
+ProofLoop is the project for the Nebius x NVIDIA Global AI Hackathon. Our core thesis: a coding agent should be judged by executable evidence, not its claim that a patch is correct.
 
-## Project status
+## Current status
 
-**Early scaffold — not production-ready.** This repository currently establishes the architecture and first milestone. Provider credentials and sandbox execution must be configured locally.
+**Early scaffold — not yet a working autonomous coding agent.** The repository currently includes provider-configurable inference, a planning API, runtime validation, a live-inference preflight, a Token Factory Sandboxes smoke test, and a deterministic Express migration fixture. The complete patch-and-repair workflow is not implemented yet.
 
-## MVP
+## Narrow MVP
 
-1. Accept a coding task and a small, trusted local sample repository.
-2. Inspect the repository and ask an LLM to propose a structured plan/patch.
-3. Apply changes only inside a temporary working copy.
-4. Run configured tests/build commands under resource and time limits.
-5. Feed failures back into the model for a bounded repair attempt.
-6. Produce a report containing the diff, executed commands, output, source references, and an honest pass/fail/unverified verdict.
-7. Record runs so a single-pass baseline can be compared with the iterative workflow.
+ProofLoop's first supported task is an Express 4 → Express 5 SPA wildcard-route migration. The agent must preserve a health endpoint and ensure root and nested client routes return the app shell. The fixture intentionally starts with an invalid Express 5 wildcard and includes three HTTP regression tests.
 
-## Intended stack
+See:
+- [Infrastructure gate](docs/INFRASTRUCTURE_GATE.md)
+- [Migration scenario and acceptance criteria](docs/MIGRATION_SCENARIO.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Development notes](docs/DEVELOPMENT.md)
 
-- TypeScript + Node.js
-- OpenAI-compatible inference adapter (NVIDIA API Catalog during development; Nebius Token Factory when access is available)
-- Tavily for targeted documentation research
-- LangSmith for tracing/evaluation when configured
-- Isolated code execution; never run untrusted repository scripts directly on the host
+## Stack
+
+- TypeScript and Node.js
+- OpenAI-compatible LLM adapter, configurable with environment variables
+- Nebius Token Factory for required NVIDIA model inference in the final entry
+- Token Factory Sandboxes for isolated code execution, if project beta access is enabled
+- Tavily for source-backed documentation research (planned)
+- LangSmith for tracing/evaluation (planned)
 
 ## Requirements
 
-- Node.js 20 or newer
+- Node.js 20+
 - npm
-- An inference API key for live model calls (optional for local scaffolding/tests)
+- Python 3.12 for the sandbox smoke test
+- Token Factory API key and project ID for the Nebius preflight; Sandboxes access must be approved separately
 
 ## Quick start
 
-```bash
+~~~powershell
 npm install
-cp .env.example .env
-# Edit .env and add your development inference API key.
-npm run dev
-```
+Copy-Item .env.example .env
+~~~
 
-The initial scaffold starts a small local API and exposes a health endpoint. The model-inference smoke test can be run with:
+Edit .env locally. Never commit it. For the existing temporary development smoke test, configure LLM_API_KEY, LLM_BASE_URL and LLM_MODEL, then run:
 
-```bash
+~~~powershell
 npm run test:model
-```
+~~~
 
-Do not commit `.env`, API keys, tokens, private source code, or secrets.
+Start the local scaffold API:
 
-## Environment variables
+~~~powershell
+npm run dev
+~~~
 
-See [`.env.example`](.env.example). The model adapter is provider-configurable:
+Health endpoint: http://127.0.0.1:8787/api/health
 
-- `LLM_API_KEY`
-- `LLM_BASE_URL`
-- `LLM_MODEL`
+The current POST /api/agent/plan endpoint only generates and validates a plan. It does not inspect a repository, edit code or run tests.
 
-For development, an OpenAI-compatible NVIDIA endpoint may be used if the chosen model is available to your account. The hackathon submission must still use Nebius Token Factory or Nebius AI Cloud and an NVIDIA open-source model in accordance with the official rules. Using an alternate provider alone does not satisfy that requirement.
+## Required infrastructure preflight
 
-## Safety design
+Configure NEBIUS_API_KEY and NEBIUS_PROJECT_ID in .env, then run:
 
-- Execute tasks only in an isolated workspace.
-- Use an allowlist of test/build commands.
-- Enforce timeouts and output limits.
-- Do not pass environment secrets into task execution.
-- Require explicit user approval before exporting/applying a patch.
-- Treat repository files, test output, and retrieved web pages as untrusted input.
-- Never claim a task passed unless the required commands actually passed.
+~~~powershell
+npm run preflight:nebius
+~~~
+
+This makes a live model-catalogue request and a small real inference request, selecting a Nemotron model that the authenticated catalogue returns.
+
+Sandboxes is a separate beta access gate. With Python 3.12 activated and requirements installed, run:
+
+~~~powershell
+python -m pip install -r requirements-sandbox.txt
+npm run preflight:sandbox
+~~~
+
+Follow [docs/INFRASTRUCTURE_GATE.md](docs/INFRASTRUCTURE_GATE.md) and official [Token Factory Sandboxes setup](https://docs.tokenfactory.nebius.com/sandboxes/start/set-up-access). If access is inactive, request activation; do not substitute local execution and claim it proves the required cloud sandbox works.
+
+## Run the migration fixture locally
+
+~~~powershell
+npm run fixture:install
+npm run fixture:test
+~~~
+
+The untouched fixture is expected to fail at startup because the wildcard route is intentionally incompatible with Express 5.1.0. This is the baseline defect, not a passing result. ProofLoop still needs to apply a patch and rerun these tests in the approved remote sandbox.
+
+## Safety principles
+
+- Run generated code only in an isolated runner, never directly on the developer machine.
+- Use allowed commands, deadlines, output limits and bounded repair attempts.
+- Do not pass API keys or other secrets into the sandbox.
+- Never make a passing claim without the actual process exit code and test output.
+- Treat source files, tool outputs and retrieved pages as untrusted input.
+- Require explicit approval before exporting a patch into the user's original checkout.
 
 ## Roadmap
 
-- [x] Initial project direction and scaffold
-- [ ] Model-provider adapter and health check
-- [ ] Safe sample-workspace inspection
-- [ ] Structured planning and patch proposals
-- [ ] Isolated test execution with bounded timeout
-- [ ] Bounded repair loop
+- [x] Initial TypeScript API scaffold
+- [x] Provider-configurable inference adapter
+- [x] Runtime validation for model-generated plans
+- [x] Nebius inference and sandbox preflight scripts
+- [x] Express migration fixture and acceptance tests
+- [ ] Validate real Token Factory model access
+- [ ] Validate Token Factory Sandboxes access
+- [ ] Inspect a controlled workspace
+- [ ] Generate and apply structured patches in sandbox
+- [ ] Execute tests and bounded repair attempts
 - [ ] Evidence report and run history
-- [ ] Tavily research integration
-- [ ] LangSmith tracing and evaluation suite
-- [ ] Nebius integration and required execution path
-- [ ] Public demo deployment and video
+- [ ] Tavily research and LangSmith evaluation
+- [ ] Deploy demo, record video, and submit
 
 ## License
 
