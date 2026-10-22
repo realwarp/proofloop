@@ -14,7 +14,8 @@
     "preflight:nebius": "node scripts/nebius-preflight.mjs",
     "preflight:sandbox": "python scripts/sandbox-smoke.py",
     "fixture:install": "npm --prefix fixtures/express-wildcard-migration install",
-    "fixture:test": "npm --prefix fixtures/express-wildcard-migration test"
+    "fixture:test": "npm --prefix fixtures/express-wildcard-migration test",
+    "verify:fixture": "node scripts/verify-migration-fixture.mjs"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
