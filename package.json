@@ -15,7 +15,8 @@
     "preflight:sandbox": "python scripts/sandbox-smoke.py",
     "fixture:install": "npm --prefix fixtures/express-wildcard-migration install",
     "fixture:test": "npm --prefix fixtures/express-wildcard-migration test",
-    "verify:fixture": "node scripts/verify-migration-fixture.mjs"
+    "verify:fixture": "node scripts/verify-migration-fixture.mjs",
+    "preflight:ai-cloud": "node scripts/ai-cloud-preflight.mjs"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
