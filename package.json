@@ -10,7 +10,11 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",
     "test:model": "tsx src/smoke-test.ts",
-    "test": "tsx --test src/**/*.test.ts"
+    "test": "tsx --test src/**/*.test.ts",
+    "preflight:nebius": "node scripts/nebius-preflight.mjs",
+    "preflight:sandbox": "python scripts/sandbox-smoke.py",
+    "fixture:install": "npm --prefix fixtures/express-wildcard-migration install",
+    "fixture:test": "npm --prefix fixtures/express-wildcard-migration test"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
