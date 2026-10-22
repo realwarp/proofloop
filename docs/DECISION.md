@@ -34,7 +34,7 @@ No physical-hardware project has been selected or validated. The hardware and vi
 3. Reproduce the Express 5 unnamed-wildcard failure and pass the three HTTP regression tests with the correct patch.
 4. Only then invest in agent-loop UI or other polish.
 
-If inference access is blocked, follow the official support thread and test the official alternative Nebius AI Cloud access path before switching tracks. Do not falsify region or billing details. If the required Nebius platform/model cannot be used at all, a compliant submission is not currently technically verified.
+If Token Factory access is blocked, continue through the official support thread. Consider Nebius AI Cloud only if the account already has no-cost credits or access, or the user explicitly approves a paid run: the hackathon FAQ says there is no separate published AI Cloud credit grant. Do not provision billable GPU resources merely to test a fallback, and do not falsify region or billing details. If the required Nebius platform/model cannot be used at all, a compliant submission is not currently technically verified.
 
 ## Why Express 4 → Express 5 wildcard migration?
 
