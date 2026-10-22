@@ -36,7 +36,7 @@ After the endpoint is running:
 - Copy its public HTTPS URL and append /v1 for LLM_BASE_URL.
 - Set LLM_API_KEY to the endpoint's generated bearer token.
 - Set LLM_MODEL to the exact model ID served by vLLM.
-- Run npm run test:model to test a real inference request.
+- Run npm run preflight:ai-cloud to list available models and test a real inference request.
 - Optionally verify GET <endpoint-url>/v1/models with the endpoint bearer token.
 
 ### Coding-agent execution gate
