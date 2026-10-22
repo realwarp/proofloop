@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-const baseUrl = (process.env.NEBIUS_BASE_URL || "https://api.tokenfactory.nebius.com/v1").replace(/\\/+$/, "");
+const baseUrl = (process.env.NEBIUS_BASE_URL || "https://api.tokenfactory.nebius.com/v1").replace(/\/+$/, "");
 const apiKey = process.env.NEBIUS_API_KEY || "";
 
 function fail(message) {
