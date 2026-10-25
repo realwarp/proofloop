@@ -74,9 +74,10 @@ The repository retains Token Factory preflight scripts as a fallback path, but t
 
 ~~~powershell
 npm run verify:fixture
+npm run test:e2e:migration
 ~~~
 
-This reproduces the intentional Express 5 wildcard-route failure, applies the known minimal migration, runs the three tests, then restores the broken baseline. CI has verified this harness. It validates the fixture only, not the AI agent or a remote Nebius execution path.
+`test:e2e:migration` runs in a fresh temporary copy, reproduces the expected failure, applies the one-line source-grounded patch, runs all three HTTP regression tests, and captures logs plus a patch/report under `artifacts/e2e/`. GitHub Actions uploads these as an artifact. See [docs/E2E_TEST.md](docs/E2E_TEST.md). This validates the fixture and patch/test harness only; it does not prove the unfinished AI agent or a Nebius cloud execution path.
 
 ## Safety principles
 
