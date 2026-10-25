@@ -16,7 +16,8 @@
     "fixture:install": "npm --prefix fixtures/express-wildcard-migration install",
     "fixture:test": "npm --prefix fixtures/express-wildcard-migration test",
     "verify:fixture": "node scripts/verify-migration-fixture.mjs",
-    "preflight:ai-cloud": "node scripts/ai-cloud-preflight.mjs"
+    "preflight:ai-cloud": "node scripts/ai-cloud-preflight.mjs",
+    "test:e2e:migration": "node scripts/e2e-migration-check.mjs"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
