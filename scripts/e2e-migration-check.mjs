@@ -173,7 +173,7 @@ try {
 
   report.stages.patched.allThreeRegressionTestsPassed = true;
   report.status = "passed";
-  report.summary = "Expected baseline failure reproduced; source-grounded patch applied to temporary copy; all 3 HTTP regression tests passed.";
+  report.summary = "Expected baseline failure reproduced; source-grounded patch passed git apply --check, was applied to a temporary copy, and all 3 HTTP regression tests passed."
   console.log("\n[PASS] Expected Express 5 baseline failure reproduced.");
   console.log("[PASS] Minimal source-grounded patch generated.");
   console.log("[PASS] All 3 HTTP regression tests passed.");
