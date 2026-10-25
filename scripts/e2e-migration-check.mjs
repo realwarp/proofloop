@@ -18,7 +18,7 @@ const fixtureSource = resolve(repoRoot, "fixtures/express-wildcard-migration");
 const outputDir = resolve(repoRoot, "artifacts/e2e");
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 const tempRoot = mkdtempSync(join(tmpdir(), "proofloop-e2e-"));
-const tempFixture = join(tempRoot, "express-wildcard-migration");
+const tempFixture = join(tempRoot, "fixtures", "express-wildcard-migration");
 
 mkdirSync(outputDir, { recursive: true });
 
@@ -94,6 +94,7 @@ try {
     throw new Error("Expected fixture source file was not found in the repository.");
   }
 
+  mkdirSync(dirname(tempFixture), { recursive: true });
   cpSync(fixtureSource, tempFixture, { recursive: true });
 
   const install = run(npmCommand, ["install", "--no-audit", "--no-fund"], tempFixture);
@@ -120,20 +121,45 @@ try {
     throw new Error("Expected exactly one known wildcard route; refusing an ambiguous patch.");
   }
 
-  const patchedSource = original.replace(oldRoute, newRoute);
-  writeFileSync(appPath, patchedSource, "utf8");
+  const lines = original.split("\n");
+  const routeIndex = lines.findIndex((line) => line.includes(oldRoute));
+  if (routeIndex < 0) throw new Error("Could not locate the route line for the patch.");
 
+  const contextStart = Math.max(0, routeIndex - 3);
+  const contextEnd = Math.min(lines.length, routeIndex + 3);
+  const contextBefore = lines.slice(contextStart, routeIndex);
+  const contextAfter = lines.slice(routeIndex + 1, contextEnd);
+  const startLine = contextStart + 1;
+  const lineCount = contextBefore.length + 1 + contextAfter.length;
+  const routeLine = lines[routeIndex];
+  const patchedRouteLine = routeLine.replace(oldRoute, newRoute);
   const patch = [
     "diff --git a/fixtures/express-wildcard-migration/src/app.js b/fixtures/express-wildcard-migration/src/app.js",
     "--- a/fixtures/express-wildcard-migration/src/app.js",
     "+++ b/fixtures/express-wildcard-migration/src/app.js",
-    "@@ -13 +13 @@",
-    '-  app.get("*", (_req, res) => {',
-    '+  app.get("/{*splat}", (_req, res) => {',
-    "",
-  ].join("\n");
-  writeFileSync(join(outputDir, "express-wildcard-migration.patch"), patch, "utf8");
-  report.patch.status = "generated-and-applied-to-temporary-copy";
+    "@@ -" + startLine + "," + lineCount + " +" + startLine + "," + lineCount + " @@",
+    ...contextBefore.map((line) => " " + line),
+    "-" + routeLine,
+    "+" + patchedRouteLine,
+    ...contextAfter.map((line) => " " + line),
+  ].join("\n") + "\n";
+  const patchPath = join(outputDir, "express-wildcard-migration.patch");
+  writeFileSync(patchPath, patch, "utf8");
+
+  const patchCheck = run("git", ["apply", "--check", patchPath], tempRoot);
+  recordStage("patch-check", patchCheck);
+  if (patchCheck.exitCode !== 0) throw new Error("The generated patch failed git apply --check.");
+
+  const applyPatch = run("git", ["apply", patchPath], tempRoot);
+  recordStage("apply-patch", applyPatch);
+  if (applyPatch.exitCode !== 0) throw new Error("git apply failed to apply the generated patch.");
+
+  const patchedSource = readFileSync(appPath, "utf8");
+  if (!patchedSource.includes(newRoute) || patchedSource.includes(oldRoute)) {
+    throw new Error("Applied file content does not match the intended migration.");
+  }
+  report.patch.status = "generated-validated-and-applied-to-temporary-copy";
+  report.patch.appliedBy = "git apply";
   report.patch.diffFile = "express-wildcard-migration.patch";
 
   const patched = run(npmCommand, ["test"], tempFixture);
