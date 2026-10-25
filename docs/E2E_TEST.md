@@ -28,6 +28,8 @@ The command installs the fixture's pinned Express dependency in a temporary dire
 - artifacts/e2e/report.json — structured run summary and captured output.
 - artifacts/e2e/install.log — dependency installation output.
 - artifacts/e2e/baseline.log — actual expected-failure output and exit code, summarized in the report.
+- artifacts/e2e/patch-check.log — output and exit code from `git apply --check`.
+- artifacts/e2e/apply-patch.log — output and exit code from applying the generated patch to the temporary copy.
 - artifacts/e2e/patched.log — actual regression test output and exit code, summarized in the report.
 - artifacts/e2e/express-wildcard-migration.patch — one-line unified patch.
 
